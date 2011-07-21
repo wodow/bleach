@@ -85,7 +85,8 @@ identity = lambda x: x  # The identity function.
 
 
 def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
-          styles=ALLOWED_STYLES, strip=False, strip_comments=True):
+          styles=ALLOWED_STYLES, strip=False, strip_comments=True,
+          xhtml=False):
     """Clean an HTML fragment and return it"""
     if not text:
         return u''
@@ -101,11 +102,12 @@ def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
 
     parser = html5lib.HTMLParser(tokenizer=s)
 
-    return _render(parser.parseFragment(text), text).strip()
+    return _render(parser.parseFragment(text), text, xhtml=xhtml).strip()
 
 
 def linkify(text, nofollow=True, filter_url=identity,
-            filter_text=identity, skip_pre=False, parse_email=False):
+            filter_text=identity, skip_pre=False, parse_email=False,
+            xhtml=False):
     """Convert URL-like strings in an HTML fragment to links.
 
     linkify() converts strings that look like URLs or domain names in a
@@ -187,13 +189,13 @@ def linkify(text, nofollow=True, filter_url=identity,
 
     linkify_nodes(forest)
 
-    return _render(forest, text)
+    return _render(forest, text, xhtml=xhtml)
 
 
-def _render(tree, source):
+def _render(tree, source, xhtml=False):
     """Try rendering as HTML, then XML, then give up."""
     try:
-        return force_unicode(_serialize(tree))
+        return force_unicode(_serialize(tree, xhtml=xhtml))
     except Exception, e:
         log.error('HTML: %r' % e, exc_info=sys.exc_info())
         try:
@@ -203,9 +205,11 @@ def _render(tree, source):
             return u''
 
 
-def _serialize(domtree):
+def _serialize(domtree, xhtml=False):
+    import pdb; pdb.set_trace()
     walker = html5lib.treewalkers.getTreeWalker('simpletree')
     stream = walker(domtree)
-    serializer = HTMLSerializer(quote_attr_values=True,
-                                omit_optional_tags=False)
+    serializer = HTMLSerializer(omit_optional_tags=False,
+                                quote_attr_values=True,
+                                use_trailing_solidus=xhtml)
     return serializer.render(stream)
