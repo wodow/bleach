@@ -95,3 +95,11 @@ def test_nasty():
               u'&gt;alert("foo");&lt;/script&gt;script&lt;del&gt;&lt;/del&gt;'
               u'&gt;')
     eq_(expect, clean(test))
+
+
+def test_conditional_comment():
+    """Thanks, IE. Thank you."""
+    test = '<!--[if IE]><script>alert("xss")</script><![endif]-->'
+    expect = ('<!--[if IE]>&lt;script&gt;alert("xss")'
+              '&lt;/script&gt;<![endif]-->')
+    eq_(expect, clean(test, strip_comments=False))
