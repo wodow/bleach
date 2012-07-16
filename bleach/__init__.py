@@ -1,5 +1,7 @@
 import logging
+from random import choice
 import re
+from string import letters, digits
 import sys
 
 import html5lib
@@ -82,6 +84,10 @@ email_re = re.compile(
     """,
     re.IGNORECASE | re.MULTILINE | re.VERBOSE)
 
+conditional_re = re.compile(
+    r'(<!--\[if.+?\]>)(.*?)(<!\[endif]-->)',
+    re.MULTILINE | re.UNICODE | re.IGNORECASE | re.DOTALL)
+
 NODE_TEXT = 4  # The numeric ID of a text node in simpletree.
 
 DEFAULT_CALLBACKS = [linkify_callbacks.nofollow]
@@ -96,6 +102,10 @@ def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
     text = force_unicode(text)
     if text.startswith(u'<!--'):
         text = u' ' + text
+
+    conditional_comments = {}
+    if strip_comments:  # Deal with IE conditional comments.
+        comments = conditional_re.findall
 
     class s(BleachSanitizer):
         allowed_elements = tags

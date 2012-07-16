@@ -99,7 +99,26 @@ def test_nasty():
 
 def test_conditional_comment():
     """Thanks, IE. Thank you."""
-    test = '<!--[if IE]><script>alert("xss")</script><![endif]-->'
-    expect = ('<!--[if IE]>&lt;script&gt;alert("xss")'
-              '&lt;/script&gt;<![endif]-->')
-    eq_(expect, clean(test, strip_comments=False))
+    script = '<script>alert("xss")</script>'
+    escaped = '&lt;script&gt;alert("xss")&lt;/script&gt;'
+    comment = '<!--%s>%s<![endif]-->'
+
+    tests = (
+        '[if IE]',
+        '[if IE 7]',
+        '[if WindowsEdition]',
+        '[if true]',
+        '[if !IE]',
+        '[if lt IE 5.5]',
+        '[if !(IE 7)]',
+        '[if (IE 6)|(IE 7)]',
+        '[if (gt IE 5)&(lt IE 7)]',
+    )
+
+    def _check(c):
+        i = comment % (c, script)
+        o = comment % (c, escaped)
+        eq_(o, clean(i, strip_comments=False))
+
+    for c in tests:
+        yield _check, c
